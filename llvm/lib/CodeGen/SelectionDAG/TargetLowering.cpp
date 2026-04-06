@@ -9880,6 +9880,51 @@ SDValue TargetLowering::expandCTLZ(SDNode *Node, SelectionDAG &DAG) const {
   return DAG.getNode(ISD::CTPOP, dl, VT, Op);
 }
 
+SDValue TargetLowering::expandCTLZWithFP(SDNode *Node, SelectionDAG &DAG) const {
+  // pseudocode :
+  // if (x == 0) return 32;
+  // f64 f = (f64)x;
+  // int i = bitcast<int>(f);
+  // int ilog2 = (i >> 23) - 127;
+  // return 31 - ilog2;
+
+  SDLoc dl(Node);
+  EVT VT = Node->getValueType(0);
+  SDValue Op = Node->getOperand(0);
+
+  EVT EltVT = VT.getVectorElementType();
+  if (EltVT != MVT::i32) {
+    return SDValue();
+  }
+
+  EVT FloatVT = VT.changeVectorElementType(*DAG.getContext(), MVT::f64);
+  const fltSemantics &Sem = FloatVT.getVectorElementType().getFltSemantics();
+  unsigned BitWidth = EltVT.getSizeInBits();
+  unsigned MantissaBits = APFloat::semanticsPrecision(Sem);
+  unsigned ExponentBias = static_cast<unsigned>(-APFloat::semanticsMinExponent(Sem) + 1);
+
+  SDValue Float = DAG.getNode(ISD::UINT_TO_FP, dl, FloatVT, Op);
+  SDValue FloatBits = DAG.getNode(ISD::BITCAST, dl, VT, Float);
+  SDValue Exp = DAG.getNode(ISD::SRL, dl, VT, FloatBits,
+                            DAG.getShiftAmountConstant(MantissaBits, VT, dl));
+  SDValue NonZeroRes =
+      DAG.getNode(ISD::SUB, dl, VT,
+                  DAG.getConstant(BitWidth - 1 + ExponentBias, dl, VT), Exp);
+
+  // Skip if CTLZ_ZERO_UNDEF
+  if (Node->getOpcode() == ISD::CTLZ_ZERO_UNDEF) {
+    return NonZeroRes;
+  }
+
+  // If Op == 0
+  EVT CmpVT = getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), VT);
+  SDValue Zero = DAG.getConstant(0, dl, VT);
+  SDValue IsZero = DAG.getSetCC(0, CmpVT, Op, Zero, ISD::SETEQ);
+  SDValue ZeroRes = DAG.getConstant(BitWidth, dl, VT);
+
+  return DAG.getNode(ISD::VSELECT, dl, VT, IsZero, ZeroRes, NonZeroRes);
+}
+
 SDValue TargetLowering::expandVPCTLZ(SDNode *Node, SelectionDAG &DAG) const {
   SDLoc dl(Node);
   EVT VT = Node->getValueType(0);
