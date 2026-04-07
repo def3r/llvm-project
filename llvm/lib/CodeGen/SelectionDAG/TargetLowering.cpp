@@ -9884,14 +9884,15 @@ SDValue TargetLowering::expandCTLZWithFP(SDNode *Node, SelectionDAG &DAG) const 
   // pseudocode :
   // if (x == 0) return 32;
   // f64 f = (f64)x;
-  // int i = bitcast<int>(f);
-  // int ilog2 = (i >> 23) - 127;
+  // u64 i = bitcast<u64>(f);
+  // u32 ilog2 = (u32)(i >> 52) - 1023;
   // return 31 - ilog2;
 
   SDLoc dl(Node);
   EVT VT = Node->getValueType(0);
   SDValue Op = Node->getOperand(0);
 
+  assert(VT.isVector() && "This expansion is intended for vectors");
   EVT EltVT = VT.getVectorElementType();
   if (EltVT != MVT::i32) {
     return SDValue();
@@ -9901,15 +9902,19 @@ SDValue TargetLowering::expandCTLZWithFP(SDNode *Node, SelectionDAG &DAG) const 
   const fltSemantics &Sem = FloatVT.getVectorElementType().getFltSemantics();
   unsigned BitWidth = EltVT.getSizeInBits();
   unsigned MantissaBits = APFloat::semanticsPrecision(Sem);
-  unsigned ExponentBias = static_cast<unsigned>(-APFloat::semanticsMinExponent(Sem) + 1);
+  unsigned ExponentBias =
+      static_cast<unsigned>(-APFloat::semanticsMinExponent(Sem) + 1);
 
+  EVT FloatBitsVT = FloatVT.changeVectorElementTypeToInteger();
   SDValue Float = DAG.getNode(ISD::UINT_TO_FP, dl, FloatVT, Op);
-  SDValue FloatBits = DAG.getNode(ISD::BITCAST, dl, VT, Float);
-  SDValue Exp = DAG.getNode(ISD::SRL, dl, VT, FloatBits,
-                            DAG.getShiftAmountConstant(MantissaBits, VT, dl));
+  SDValue FloatBits = DAG.getNode(ISD::BITCAST, dl, FloatBitsVT, Float);
+  SDValue Exp =
+      DAG.getNode(ISD::SRL, dl, FloatBitsVT, FloatBits,
+                  DAG.getShiftAmountConstant(MantissaBits, FloatBitsVT, dl));
+  SDValue ExpTrunc = DAG.getNode(ISD::TRUNCATE, dl, VT, Exp);
   SDValue NonZeroRes =
       DAG.getNode(ISD::SUB, dl, VT,
-                  DAG.getConstant(BitWidth - 1 + ExponentBias, dl, VT), Exp);
+                  DAG.getConstant(BitWidth - 1 + ExponentBias, dl, VT), ExpTrunc);
 
   // Skip if CTLZ_ZERO_UNDEF
   if (Node->getOpcode() == ISD::CTLZ_ZERO_UNDEF) {
@@ -9919,7 +9924,7 @@ SDValue TargetLowering::expandCTLZWithFP(SDNode *Node, SelectionDAG &DAG) const 
   // If Op == 0
   EVT CmpVT = getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), VT);
   SDValue Zero = DAG.getConstant(0, dl, VT);
-  SDValue IsZero = DAG.getSetCC(0, CmpVT, Op, Zero, ISD::SETEQ);
+  SDValue IsZero = DAG.getSetCC(dl, CmpVT, Op, Zero, ISD::SETEQ);
   SDValue ZeroRes = DAG.getConstant(BitWidth, dl, VT);
 
   return DAG.getNode(ISD::VSELECT, dl, VT, IsZero, ZeroRes, NonZeroRes);
