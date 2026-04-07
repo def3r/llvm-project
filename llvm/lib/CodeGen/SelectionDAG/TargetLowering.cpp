@@ -9906,7 +9906,15 @@ SDValue TargetLowering::expandCTLZWithFP(SDNode *Node, SelectionDAG &DAG) const 
       static_cast<unsigned>(-APFloat::semanticsMinExponent(Sem) + 1);
 
   EVT FloatBitsVT = FloatVT.changeVectorElementTypeToInteger();
-  SDValue Float = DAG.getNode(ISD::UINT_TO_FP, dl, FloatVT, Op);
+  unsigned NumElts = VT.getVectorNumElements();
+  SmallVector<SDValue, 8> FloatElts;
+  for (unsigned i = 0; i < NumElts; i++) {
+    SDValue Elt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, Op,
+        DAG.getIntPtrConstant(i, dl));
+    SDValue FElt = DAG.getNode(ISD::UINT_TO_FP, dl, MVT::f64, Elt);
+    FloatElts.push_back(FElt);
+  }
+  SDValue Float = DAG.getBuildVector(FloatVT, dl, FloatElts);
   SDValue FloatBits = DAG.getNode(ISD::BITCAST, dl, FloatBitsVT, Float);
   SDValue Exp =
       DAG.getNode(ISD::SRL, dl, FloatBitsVT, FloatBits,
