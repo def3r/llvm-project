@@ -9907,7 +9907,7 @@ SDValue TargetLowering::expandCTLZWithFP(SDNode *Node, SelectionDAG &DAG) const 
 
   EVT FloatBitsVT = FloatVT.changeVectorElementTypeToInteger();
   unsigned NumElts = VT.getVectorNumElements();
-  SmallVector<SDValue, 8> FloatElts;
+  SmallVector<SDValue, 4> FloatElts;
   for (unsigned i = 0; i < NumElts; i++) {
     SDValue Elt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, Op,
         DAG.getIntPtrConstant(i, dl));
@@ -9915,21 +9915,22 @@ SDValue TargetLowering::expandCTLZWithFP(SDNode *Node, SelectionDAG &DAG) const 
     FloatElts.push_back(FElt);
   }
   SDValue Float = DAG.getBuildVector(FloatVT, dl, FloatElts);
+
   SDValue FloatBits = DAG.getNode(ISD::BITCAST, dl, FloatBitsVT, Float);
-  SDValue Exp =
-      DAG.getNode(ISD::SRL, dl, FloatBitsVT, FloatBits,
-                  DAG.getShiftAmountConstant(MantissaBits, FloatBitsVT, dl));
+  SDValue Exp = DAG.getNode(
+      ISD::SRL, dl, FloatBitsVT, FloatBits,
+      DAG.getShiftAmountConstant(MantissaBits - 1, FloatBitsVT, dl));
   SDValue ExpTrunc = DAG.getNode(ISD::TRUNCATE, dl, VT, Exp);
   SDValue NonZeroRes =
       DAG.getNode(ISD::SUB, dl, VT,
                   DAG.getConstant(BitWidth - 1 + ExponentBias, dl, VT), ExpTrunc);
 
-  // Skip if CTLZ_ZERO_UNDEF
+  // Skip Op == 0 case for CTLZ_ZERO_UNDEF
   if (Node->getOpcode() == ISD::CTLZ_ZERO_UNDEF) {
     return NonZeroRes;
   }
 
-  // If Op == 0
+  // This Handles the Op == 0 case
   EVT CmpVT = getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), VT);
   SDValue Zero = DAG.getConstant(0, dl, VT);
   SDValue IsZero = DAG.getSetCC(dl, CmpVT, Op, Zero, ISD::SETEQ);

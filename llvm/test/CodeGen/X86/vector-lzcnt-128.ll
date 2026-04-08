@@ -581,7 +581,7 @@ define <4 x i32> @testv4i32(<4 x i32> %in) nounwind {
 ; SSE2-NEXT:    xorps %xmm2, %xmm2
 ; SSE2-NEXT:    cvtsi2sd %rax, %xmm2
 ; SSE2-NEXT:    unpcklpd {{.*#+}} xmm2 = xmm2[0],xmm1[0]
-; SSE2-NEXT:    psrlq $53, %xmm2
+; SSE2-NEXT:    psrlq $52, %xmm2
 ; SSE2-NEXT:    movd %xmm0, %eax
 ; SSE2-NEXT:    xorps %xmm1, %xmm1
 ; SSE2-NEXT:    cvtsi2sd %rax, %xmm1
@@ -590,7 +590,7 @@ define <4 x i32> @testv4i32(<4 x i32> %in) nounwind {
 ; SSE2-NEXT:    xorps %xmm3, %xmm3
 ; SSE2-NEXT:    cvtsi2sd %rax, %xmm3
 ; SSE2-NEXT:    unpcklpd {{.*#+}} xmm1 = xmm1[0],xmm3[0]
-; SSE2-NEXT:    psrlq $53, %xmm1
+; SSE2-NEXT:    psrlq $52, %xmm1
 ; SSE2-NEXT:    packssdw %xmm2, %xmm1
 ; SSE2-NEXT:    movdqa {{.*#+}} xmm2 = [1054,1054,1054,1054]
 ; SSE2-NEXT:    psubd %xmm1, %xmm2
@@ -613,7 +613,7 @@ define <4 x i32> @testv4i32(<4 x i32> %in) nounwind {
 ; SSE3-NEXT:    xorps %xmm2, %xmm2
 ; SSE3-NEXT:    cvtsi2sd %rax, %xmm2
 ; SSE3-NEXT:    unpcklpd {{.*#+}} xmm2 = xmm2[0],xmm1[0]
-; SSE3-NEXT:    psrlq $53, %xmm2
+; SSE3-NEXT:    psrlq $52, %xmm2
 ; SSE3-NEXT:    movd %xmm0, %eax
 ; SSE3-NEXT:    xorps %xmm1, %xmm1
 ; SSE3-NEXT:    cvtsi2sd %rax, %xmm1
@@ -622,7 +622,7 @@ define <4 x i32> @testv4i32(<4 x i32> %in) nounwind {
 ; SSE3-NEXT:    xorps %xmm3, %xmm3
 ; SSE3-NEXT:    cvtsi2sd %rax, %xmm3
 ; SSE3-NEXT:    unpcklpd {{.*#+}} xmm1 = xmm1[0],xmm3[0]
-; SSE3-NEXT:    psrlq $53, %xmm1
+; SSE3-NEXT:    psrlq $52, %xmm1
 ; SSE3-NEXT:    packssdw %xmm2, %xmm1
 ; SSE3-NEXT:    movdqa {{.*#+}} xmm2 = [1054,1054,1054,1054]
 ; SSE3-NEXT:    psubd %xmm1, %xmm2
@@ -810,7 +810,7 @@ define <4 x i32> @testv4i32u(<4 x i32> %in) nounwind {
 ; SSE2-NEXT:    xorps %xmm2, %xmm2
 ; SSE2-NEXT:    cvtsi2sd %rax, %xmm2
 ; SSE2-NEXT:    unpcklpd {{.*#+}} xmm2 = xmm2[0],xmm1[0]
-; SSE2-NEXT:    psrlq $53, %xmm2
+; SSE2-NEXT:    psrlq $52, %xmm2
 ; SSE2-NEXT:    movd %xmm0, %eax
 ; SSE2-NEXT:    xorps %xmm1, %xmm1
 ; SSE2-NEXT:    cvtsi2sd %rax, %xmm1
@@ -819,7 +819,7 @@ define <4 x i32> @testv4i32u(<4 x i32> %in) nounwind {
 ; SSE2-NEXT:    xorps %xmm0, %xmm0
 ; SSE2-NEXT:    cvtsi2sd %rax, %xmm0
 ; SSE2-NEXT:    unpcklpd {{.*#+}} xmm1 = xmm1[0],xmm0[0]
-; SSE2-NEXT:    psrlq $53, %xmm1
+; SSE2-NEXT:    psrlq $52, %xmm1
 ; SSE2-NEXT:    packssdw %xmm2, %xmm1
 ; SSE2-NEXT:    movdqa {{.*#+}} xmm0 = [1054,1054,1054,1054]
 ; SSE2-NEXT:    psubd %xmm1, %xmm0
@@ -836,7 +836,7 @@ define <4 x i32> @testv4i32u(<4 x i32> %in) nounwind {
 ; SSE3-NEXT:    xorps %xmm2, %xmm2
 ; SSE3-NEXT:    cvtsi2sd %rax, %xmm2
 ; SSE3-NEXT:    unpcklpd {{.*#+}} xmm2 = xmm2[0],xmm1[0]
-; SSE3-NEXT:    psrlq $53, %xmm2
+; SSE3-NEXT:    psrlq $52, %xmm2
 ; SSE3-NEXT:    movd %xmm0, %eax
 ; SSE3-NEXT:    xorps %xmm1, %xmm1
 ; SSE3-NEXT:    cvtsi2sd %rax, %xmm1
@@ -845,7 +845,7 @@ define <4 x i32> @testv4i32u(<4 x i32> %in) nounwind {
 ; SSE3-NEXT:    xorps %xmm0, %xmm0
 ; SSE3-NEXT:    cvtsi2sd %rax, %xmm0
 ; SSE3-NEXT:    unpcklpd {{.*#+}} xmm1 = xmm1[0],xmm0[0]
-; SSE3-NEXT:    psrlq $53, %xmm1
+; SSE3-NEXT:    psrlq $52, %xmm1
 ; SSE3-NEXT:    packssdw %xmm2, %xmm1
 ; SSE3-NEXT:    movdqa {{.*#+}} xmm0 = [1054,1054,1054,1054]
 ; SSE3-NEXT:    psubd %xmm1, %xmm0
